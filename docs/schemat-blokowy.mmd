@@ -1,0 +1,41 @@
+flowchart TD
+    START(["Start"])
+    Q1[/"Użytkownik wpisuje lub dyktuje zapytanie<br/>np. „Chcę słuchawki do 200 zł”"/]
+    SEND["Frontend wysyła wiadomość<br/>do backendu"]
+    EXTRACT["LLM (Ollama) wyodrębnia wymagania:<br/>kategoria, budżet, cechy → JSON"]
+    UPDATE["Backend aktualizuje profil<br/>wymagań w bieżącej sesji"]
+    D1{"Czy znane są<br/>kluczowe<br/>parametry?"}
+    ASK["LLM formułuje pytanie<br/>o brakujące szczegóły"]
+    OUTQ[/"Asystent pyta o szczegóły<br/>np. typ, kolor, rozmiar, specyfikacja"/]
+    ANSWER[/"Użytkownik odpowiada<br/>lub zmienia wymagania"/]
+    SEARCH["Wyszukiwanie i filtrowanie<br/>produktów w katalogu"]
+    D2{"Czy znaleziono<br/>pasujące<br/>produkty?"}
+    NORES[/"Asystent informuje o braku wyników<br/>i proponuje zmianę kryteriów"/]
+    RANK["Ranking i wybór<br/>3 najlepszych modeli"]
+    DESC["LLM opisuje propozycje<br/>na podstawie danych z katalogu"]
+    SHOW[/"Wyświetlenie rekomendacji:<br/>karty produktów + uzasadnienie"/]
+    D3{"Czy użytkownik<br/>akceptuje<br/>propozycję?"}
+    KONIEC(["Koniec / nowe wyszukiwanie"])
+
+    START --> Q1 --> SEND --> EXTRACT --> UPDATE --> D1
+    D1 -- Nie --> ASK --> OUTQ --> ANSWER
+    ANSWER --> SEND
+    D1 -- Tak --> SEARCH --> D2
+    D2 -- Nie --> NORES --> ANSWER
+    D2 -- Tak --> RANK --> DESC --> SHOW --> D3
+    D3 -- Nie --> ANSWER
+    D3 -- Tak --> KONIEC
+
+    classDef term fill:#F6B26B,stroke:#B45F06,stroke-width:2px,color:#000
+    classDef proc fill:#CFE2F3,stroke:#3D85C6,stroke-width:2px,color:#000
+    classDef llm fill:#D9D2E9,stroke:#674EA7,stroke-width:2px,color:#000
+    classDef io fill:#FFF2CC,stroke:#BF9000,stroke-width:2px,color:#000
+    classDef dec fill:#D9EAD3,stroke:#6AA84F,stroke-width:2px,color:#000
+    classDef err fill:#F4CCCC,stroke:#CC0000,stroke-width:2px,color:#000
+
+    class START,KONIEC term
+    class SEND,UPDATE,SEARCH,RANK proc
+    class EXTRACT,ASK,DESC llm
+    class Q1,OUTQ,ANSWER,SHOW io
+    class D1,D2,D3 dec
+    class NORES err
