@@ -1,0 +1,41 @@
+flowchart TD
+    START(["Start:<br/>użytkownik otwiera stronę asystenta"])
+    GREET[/"Asystent wita się<br/>i pyta, czego szukasz"/]
+    IN1[/"Użytkownik:<br/>„Szukam laptopa do nauki”"/]
+    PROC["Analiza wiadomości<br/>i aktualizacja profilu wymagań"]
+    OUTQ[/"Asystent: „Jaki masz budżet?”"/]
+    A{"Czy użytkownik<br/>odpowiada w ciągu<br/>30 minut?"}
+    EXP["Sesja wygasa,<br/>dane rozmowy usunięte"]
+    KEXP(["Koniec: brak aktywności<br/>lub zamknięta karta"])
+    IN2[/"Użytkownik pisze „Jednak rezygnuję”<br/>lub klika „Zakończ rozmowę”"/]
+    B{"Czy kliknięto<br/>„Zakończ<br/>rozmowę”?"}
+    SEND["Frontend wysyła wiadomość"]
+    LLM["LLM (Ollama) rozpoznaje<br/>intencję wiadomości"]
+    Q{"Czy użytkownik<br/>chce zakończyć?"}
+    W1>"Kontynuacja rozmowy<br/>(wariant 1)"]
+    BYE[/"Asystent potwierdza zakończenie<br/>i podsumowuje zebrane wymagania"/]
+    CLEAR["Usunięcie sesji<br/>i profilu wymagań"]
+    K(["Koniec: rezygnacja użytkownika,<br/>dostępny przycisk „Nowa rozmowa”"])
+
+    START --> GREET --> IN1 --> PROC --> OUTQ --> A
+    A -- Nie --> EXP --> KEXP
+    A -- Tak --> IN2 --> B
+    B -- Tak --> BYE
+    B -- Nie --> SEND --> LLM --> Q
+    Q -. Nie .-> W1
+    Q -- Tak --> BYE --> CLEAR --> K
+
+    classDef term fill:#F6B26B,stroke:#B45F06,stroke-width:2px,color:#000
+    classDef proc fill:#CFE2F3,stroke:#3D85C6,stroke-width:2px,color:#000
+    classDef llm fill:#D9D2E9,stroke:#674EA7,stroke-width:2px,color:#000
+    classDef io fill:#FFF2CC,stroke:#BF9000,stroke-width:2px,color:#000
+    classDef dec fill:#D9EAD3,stroke:#6AA84F,stroke-width:2px,color:#000
+    classDef err fill:#F4CCCC,stroke:#CC0000,stroke-width:2px,color:#000
+    classDef ref fill:#EEEEEE,stroke:#999999,stroke-width:1px,stroke-dasharray:5 5,color:#555
+
+    class START,KEXP,K term
+    class PROC,EXP,SEND,CLEAR proc
+    class LLM llm
+    class GREET,IN1,OUTQ,IN2,BYE io
+    class A,B,Q dec
+    class W1 ref

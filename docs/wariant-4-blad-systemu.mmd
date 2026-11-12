@@ -1,0 +1,41 @@
+flowchart TD
+    START(["Start:<br/>użytkownik otwiera stronę asystenta"])
+    GREET[/"Asystent wita się<br/>i pyta, czego szukasz"/]
+    IN[/"Użytkownik wysyła wiadomość"/]
+    SEND["Frontend wysyła żądanie<br/>i pokazuje „Asystent pisze…”"]
+    B{"Czy backend<br/>odpowiada?"}
+    NET[/"Komunikat: „Brak połączenia<br/>z serwerem”"/]
+    CALL["Backend wysyła zapytanie<br/>do Ollama (limit 30 s)"]
+    O{"Czy model<br/>odpowiedział w czasie<br/>poprawnym JSON-em?"}
+    W1>"Dalsza analiza<br/>(wariant 1)"]
+    L{"Czy wykonano już<br/>2 ponowienia?"}
+    RETRY["Ponowienie zapytania<br/>z informacją o błędzie"]
+    LOG["Zapis błędu w logach"]
+    ERR[/"Komunikat: „Asystent jest chwilowo<br/>niedostępny”, historia zachowana"/]
+    R{"Czy użytkownik<br/>klika „Spróbuj<br/>ponownie”?"}
+    K(["Koniec: przerwanie<br/>z przyczyn technicznych"])
+
+    START --> GREET --> IN --> SEND --> B
+    B -- Nie --> NET --> R
+    B -- Tak --> CALL --> O
+    O -. Tak .-> W1
+    O -- Nie --> L
+    L -- Nie --> RETRY --> CALL
+    L -- Tak --> LOG --> ERR --> R
+    R -- Tak --> SEND
+    R -- Nie --> K
+
+    classDef term fill:#F6B26B,stroke:#B45F06,stroke-width:2px,color:#000
+    classDef proc fill:#CFE2F3,stroke:#3D85C6,stroke-width:2px,color:#000
+    classDef llm fill:#D9D2E9,stroke:#674EA7,stroke-width:2px,color:#000
+    classDef io fill:#FFF2CC,stroke:#BF9000,stroke-width:2px,color:#000
+    classDef dec fill:#D9EAD3,stroke:#6AA84F,stroke-width:2px,color:#000
+    classDef err fill:#F4CCCC,stroke:#CC0000,stroke-width:2px,color:#000
+    classDef ref fill:#EEEEEE,stroke:#999999,stroke-width:1px,stroke-dasharray:5 5,color:#555
+
+    class START,K term
+    class SEND,CALL,RETRY,LOG proc
+    class GREET,IN io
+    class B,O,L,R dec
+    class NET,ERR err
+    class W1 ref

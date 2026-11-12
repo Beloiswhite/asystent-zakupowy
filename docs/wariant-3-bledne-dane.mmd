@@ -1,0 +1,49 @@
+flowchart TD
+    START(["Start:<br/>użytkownik otwiera stronę asystenta"])
+    GREET[/"Asystent wita się<br/>i pyta, czego szukasz"/]
+    IN[/"Użytkownik wpisuje<br/>lub dyktuje wiadomość"/]
+    V{"Czy wiadomość<br/>jest poprawna?"}
+    SEND["Frontend wysyła wiadomość"]
+    LLM["LLM (Ollama) rozpoznaje<br/>intencję i wymagania"]
+    T{"Czy prośba dotyczy<br/>produktów<br/>z katalogu?"}
+    CNT["Zwiększenie licznika<br/>nieudanych prób"]
+    L{"Czy to 3. nieudana<br/>próba z rzędu?"}
+    HINT[/"Asystent wyjaśnia, czego nie zrozumiał,<br/>i podaje przykładowe zapytania"/]
+    STOP[/"Asystent przerywa wyszukiwanie<br/>i proponuje rozpoczęcie od nowa"/]
+    K(["Koniec: przerwanie<br/>z powodu błędnych danych"])
+    UPD["Aktualizacja profilu wymagań<br/>(„nie wiem” = parametr dowolny)"]
+    D1{"Czy znane są<br/>kluczowe<br/>parametry?"}
+    W1A>"Pytanie o szczegóły<br/>(wariant 1)"]
+    SEARCH["Filtrowanie produktów<br/>w katalogu"]
+    D2{"Czy znaleziono<br/>pasujące<br/>produkty?"}
+    NORES[/"Asystent: „Nie mam słuchawek do 5 zł.<br/>Najtańsze kosztują 49 zł – pokazać?”"/]
+    W1B>"Rekomendacje<br/>(wariant 1)"]
+
+    START --> GREET --> IN --> V
+    V -- Nie --> CNT
+    V -- Tak --> SEND --> LLM --> T
+    T -- Nie --> CNT
+    CNT --> L
+    L -- Nie --> HINT --> IN
+    L -- Tak --> STOP --> K
+    T -- Tak --> UPD --> D1
+    D1 -. Nie .-> W1A
+    D1 -- Tak --> SEARCH --> D2
+    D2 -- Nie --> NORES --> IN
+    D2 -. Tak .-> W1B
+
+    classDef term fill:#F6B26B,stroke:#B45F06,stroke-width:2px,color:#000
+    classDef proc fill:#CFE2F3,stroke:#3D85C6,stroke-width:2px,color:#000
+    classDef llm fill:#D9D2E9,stroke:#674EA7,stroke-width:2px,color:#000
+    classDef io fill:#FFF2CC,stroke:#BF9000,stroke-width:2px,color:#000
+    classDef dec fill:#D9EAD3,stroke:#6AA84F,stroke-width:2px,color:#000
+    classDef err fill:#F4CCCC,stroke:#CC0000,stroke-width:2px,color:#000
+    classDef ref fill:#EEEEEE,stroke:#999999,stroke-width:1px,stroke-dasharray:5 5,color:#555
+
+    class START,K term
+    class SEND,CNT,UPD,SEARCH proc
+    class LLM llm
+    class GREET,IN,HINT io
+    class V,T,L,D1,D2 dec
+    class STOP,NORES err
+    class W1A,W1B ref

@@ -1,0 +1,48 @@
+flowchart TD
+    START(["Start:<br/>użytkownik otwiera stronę asystenta"])
+    GREET[/"Asystent wita się<br/>i pyta, czego szukasz"/]
+    IN1[/"Użytkownik:<br/>„Chcę słuchawki do 200 zł”"/]
+    SEND["Frontend wysyła wiadomość<br/>i pokazuje „Asystent pisze…”"]
+    LLM["LLM (Ollama) wyodrębnia<br/>wymagania → JSON"]
+    UPD["Backend aktualizuje profil<br/>wymagań w sesji"]
+    D1{"Czy znane są<br/>kluczowe<br/>parametry?"}
+    ASK["LLM formułuje pytanie<br/>o brakujące szczegóły"]
+    OUTQ[/"Asystent: „Douszne czy nauszne?<br/>Przewodowe czy bezprzewodowe?”"/]
+    IN2[/"Użytkownik: „Nauszne,<br/>bezprzewodowe, czarne”"/]
+    SEARCH["Filtrowanie produktów<br/>w katalogu"]
+    D2{"Czy znaleziono<br/>pasujące<br/>produkty?"}
+    W3>"Wariant 3"]
+    RANK["Ranking i wybór<br/>3 najlepszych modeli"]
+    DESC["LLM opisuje propozycje<br/>na podstawie katalogu"]
+    SHOW[/"Karty 3 produktów<br/>z ceną i uzasadnieniem"/]
+    D3{"Czy użytkownik<br/>wybrał<br/>produkt?"}
+    ALT>"Zmiana wymagań<br/>(ścieżka alternatywna)"]
+    SUM[/"Podsumowanie wyboru:<br/>model, cena, parametry"/]
+    D4{"Czy rozpocząć<br/>nowe<br/>wyszukiwanie?"}
+    RESET["Wyczyszczenie<br/>profilu wymagań"]
+    KOK(["Koniec: produkt wybrany"])
+
+    START --> GREET --> IN1 --> SEND --> LLM --> UPD --> D1
+    D1 -- Nie --> ASK --> OUTQ --> IN2 --> SEND
+    D1 -- Tak --> SEARCH --> D2
+    D2 -. Nie .-> W3
+    D2 -- Tak --> RANK --> DESC --> SHOW --> D3
+    D3 -. Nie .-> ALT
+    D3 -- Tak --> SUM --> D4
+    D4 -- Tak --> RESET --> GREET
+    D4 -- Nie --> KOK
+
+    classDef term fill:#F6B26B,stroke:#B45F06,stroke-width:2px,color:#000
+    classDef proc fill:#CFE2F3,stroke:#3D85C6,stroke-width:2px,color:#000
+    classDef llm fill:#D9D2E9,stroke:#674EA7,stroke-width:2px,color:#000
+    classDef io fill:#FFF2CC,stroke:#BF9000,stroke-width:2px,color:#000
+    classDef dec fill:#D9EAD3,stroke:#6AA84F,stroke-width:2px,color:#000
+    classDef err fill:#F4CCCC,stroke:#CC0000,stroke-width:2px,color:#000
+    classDef ref fill:#EEEEEE,stroke:#999999,stroke-width:1px,stroke-dasharray:5 5,color:#555
+
+    class START,KOK term
+    class SEND,UPD,SEARCH,RANK,RESET proc
+    class LLM,ASK,DESC llm
+    class GREET,IN1,OUTQ,IN2,SHOW,SUM io
+    class D1,D2,D3,D4 dec
+    class W3,ALT ref

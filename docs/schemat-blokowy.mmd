@@ -1,30 +1,55 @@
 flowchart TD
-    START(["Start"])
-    Q1[/"Użytkownik wpisuje lub dyktuje zapytanie<br/>np. „Chcę słuchawki do 200 zł”"/]
-    SEND["Frontend wysyła wiadomość<br/>do backendu"]
-    EXTRACT["LLM (Ollama) wyodrębnia wymagania:<br/>kategoria, budżet, cechy → JSON"]
-    UPDATE["Backend aktualizuje profil<br/>wymagań w bieżącej sesji"]
+    START(["Start:<br/>użytkownik otwiera stronę asystenta"])
+    GREET[/"Asystent wita się<br/>i pyta, czego szukasz"/]
+    INPUT[/"Użytkownik wpisuje<br/>lub dyktuje wiadomość"/]
+    V1{"Czy wiadomość<br/>jest poprawna?"}
+    HINT[/"Podpowiedź z przykładowymi<br/>zapytaniami"/]
+    SEND["Frontend wysyła wiadomość<br/>i pokazuje „Asystent pisze…”"]
+    LLM["LLM (Ollama) rozpoznaje<br/>intencję i wymagania → JSON"]
+    E1{"Czy system<br/>odpowiedział<br/>poprawnie?"}
+    ERR[/"Komunikat o błędzie technicznym,<br/>historia rozmowy zachowana"/]
+    R{"Czy użytkownik<br/>ponawia próbę?"}
+    KERR(["Koniec: przerwanie<br/>z przyczyn technicznych"])
+    Q{"Czy użytkownik<br/>chce zakończyć?"}
+    BYE[/"Asystent żegna się<br/>i podsumowuje rozmowę"/]
+    KUSER(["Koniec: rezygnacja<br/>użytkownika"])
+    T{"Czy prośba dotyczy<br/>produktów<br/>z katalogu?"}
+    OFF[/"Asystent wyjaśnia,<br/>w czym może pomóc"/]
+    UPD["Backend aktualizuje profil<br/>wymagań w sesji"]
     D1{"Czy znane są<br/>kluczowe<br/>parametry?"}
     ASK["LLM formułuje pytanie<br/>o brakujące szczegóły"]
-    OUTQ[/"Asystent pyta o szczegóły<br/>np. typ, kolor, rozmiar, specyfikacja"/]
-    ANSWER[/"Użytkownik odpowiada<br/>lub zmienia wymagania"/]
-    SEARCH["Wyszukiwanie i filtrowanie<br/>produktów w katalogu"]
+    OUTQ[/"Asystent pyta o szczegóły<br/>np. typ, kolor, rozmiar"/]
+    SEARCH["Filtrowanie produktów<br/>w katalogu"]
     D2{"Czy znaleziono<br/>pasujące<br/>produkty?"}
-    NORES[/"Asystent informuje o braku wyników<br/>i proponuje zmianę kryteriów"/]
+    NORES[/"Brak wyników i propozycja<br/>zmiany kryteriów"/]
     RANK["Ranking i wybór<br/>3 najlepszych modeli"]
-    DESC["LLM opisuje propozycje<br/>na podstawie danych z katalogu"]
-    SHOW[/"Wyświetlenie rekomendacji:<br/>karty produktów + uzasadnienie"/]
-    D3{"Czy użytkownik<br/>akceptuje<br/>propozycję?"}
-    KONIEC(["Koniec / nowe wyszukiwanie"])
+    DESC["LLM opisuje propozycje<br/>na podstawie katalogu"]
+    SHOW[/"Karty produktów<br/>z uzasadnieniem"/]
+    D3{"Czy użytkownik<br/>wybrał<br/>produkt?"}
+    SUM[/"Podsumowanie wyboru:<br/>model, cena, parametry"/]
+    D4{"Czy rozpocząć<br/>nowe<br/>wyszukiwanie?"}
+    RESET["Wyczyszczenie<br/>profilu wymagań"]
+    KOK(["Koniec: produkt wybrany"])
 
-    START --> Q1 --> SEND --> EXTRACT --> UPDATE --> D1
-    D1 -- Nie --> ASK --> OUTQ --> ANSWER
-    ANSWER --> SEND
+    START --> GREET --> INPUT --> V1
+    V1 -- Nie --> HINT --> INPUT
+    V1 -- Tak --> SEND --> LLM --> E1
+    E1 -- Nie --> ERR --> R
+    R -- Tak --> SEND
+    R -- Nie --> KERR
+    E1 -- Tak --> Q
+    Q -- Tak --> BYE --> KUSER
+    Q -- Nie --> T
+    T -- Nie --> OFF --> INPUT
+    T -- Tak --> UPD --> D1
+    D1 -- Nie --> ASK --> OUTQ --> INPUT
     D1 -- Tak --> SEARCH --> D2
-    D2 -- Nie --> NORES --> ANSWER
+    D2 -- Nie --> NORES --> INPUT
     D2 -- Tak --> RANK --> DESC --> SHOW --> D3
-    D3 -- Nie --> ANSWER
-    D3 -- Tak --> KONIEC
+    D3 -- Nie --> INPUT
+    D3 -- Tak --> SUM --> D4
+    D4 -- Tak --> RESET --> GREET
+    D4 -- Nie --> KOK
 
     classDef term fill:#F6B26B,stroke:#B45F06,stroke-width:2px,color:#000
     classDef proc fill:#CFE2F3,stroke:#3D85C6,stroke-width:2px,color:#000
@@ -32,10 +57,11 @@ flowchart TD
     classDef io fill:#FFF2CC,stroke:#BF9000,stroke-width:2px,color:#000
     classDef dec fill:#D9EAD3,stroke:#6AA84F,stroke-width:2px,color:#000
     classDef err fill:#F4CCCC,stroke:#CC0000,stroke-width:2px,color:#000
+    classDef ref fill:#EEEEEE,stroke:#999999,stroke-width:1px,stroke-dasharray:5 5,color:#555
 
-    class START,KONIEC term
-    class SEND,UPDATE,SEARCH,RANK proc
-    class EXTRACT,ASK,DESC llm
-    class Q1,OUTQ,ANSWER,SHOW io
-    class D1,D2,D3 dec
-    class NORES err
+    class START,KERR,KUSER,KOK term
+    class SEND,UPD,SEARCH,RANK,RESET proc
+    class LLM,ASK,DESC llm
+    class GREET,INPUT,HINT,BYE,OFF,OUTQ,SHOW,SUM io
+    class V1,E1,R,Q,T,D1,D2,D3,D4 dec
+    class ERR,NORES err
